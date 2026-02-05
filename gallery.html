@@ -11,163 +11,251 @@
     <a href="search.html" class="nav-button">home</a>
   </div>
   
-  <div class="search-container">
-    <div class="tape"></div>
-    
-    <h1>cadenzas</h1>
-    <p class="subtitle">your collection of keepsakes</p>
+  <div class="gallery-wrapper">
+    <div class="gallery-header">
+      <h1>cadenzas</h1>
+      <p class="subtitle">your collection of keepsakes</p>
+      <p class="keepsake-count" id="keepsakeCount">0 keepsakes</p>
+    </div>
 
-    <div id="results"></div>
+    <div class="carousel-container">
+      <button class="carousel-nav prev" id="prevBtn">‹</button>
+      <div class="carousel-track" id="carouselTrack">
+        <!-- Cards will be inserted here -->
+      </div>
+      <button class="carousel-nav next" id="nextBtn">›</button>
+    </div>
+
+    <div class="carousel-dots" id="carouselDots"></div>
+
+    <div class="card-actions">
+      <button class="action-button share-button" id="shareBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+          <polyline points="16 6 12 2 8 6"></polyline>
+          <line x1="12" y1="2" x2="12" y2="15"></line>
+        </svg>
+        share
+      </button>
+      <button class="action-button delete-button" id="deleteBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        delete
+      </button>
+    </div>
   </div>
 
   <script src="shared.js"></script>
   <script>
-    const resultsDiv = document.getElementById('results');
+    const carouselTrack = document.getElementById('carouselTrack');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const dotsContainer = document.getElementById('carouselDots');
+    const keepsakeCount = document.getElementById('keepsakeCount');
+    const shareBtn = document.getElementById('shareBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+
+    let currentIndex = 0;
+    let gallery = [];
 
     function loadGallery() {
-      const gallery = getGallery();
+      gallery = getGallery();
       
       if (gallery.length === 0) {
-        resultsDiv.innerHTML = `
-          <div style="text-align: center; padding: 60px 20px;">
-            <div style="
-              font-size: 6em; 
-              margin-bottom: 20px; 
-              opacity: 0.2;
-              font-family: 'Libre Baskerville', serif;
-              color: #8b6642;
-            ">~</div>
-            <h3 style="
-              color: #8b7355; 
-              margin-bottom: 10px; 
-              font-family: 'Libre Baskerville', serif; 
-              font-size: 1.5em;
-            ">
-              your anthology is empty
-            </h3>
-            <p style="
-              color: #b5a08f; 
-              font-style: italic;
-              font-family: 'Courier Prime', monospace;
-            ">
-              search for songs and save your favorite lines
-            </p>
-          </div>
-        `;
-      } else {
-        resultsDiv.innerHTML = `
-          <h2 style="
-            font-family: 'Libre Baskerville', serif; 
-            color: #5a4a3a; 
-            text-align: center; 
-            margin-bottom: 10px;
-            font-size: 2em;
-          ">your anthology</h2>
-          <p style="
-            text-align: center; 
-            color: #8b7355; 
-            font-style: italic; 
-            margin-bottom: 30px;
-            font-family: 'Space Mono', monospace;
-            letter-spacing: 1px;
-          ">${gallery.length} keepsake${gallery.length === 1 ? '' : 's'}</p>
-          <div id="galleryGrid"></div>
-        `;
-        
-        const galleryGrid = document.getElementById('galleryGrid');
-        
-        gallery.forEach((keepsake, index) => {
-          const card = document.createElement('div');
-          card.style.cssText = `
-            background: #fffef9;
-            border: 2px solid #8b6642;
-            padding: 25px;
-            margin-bottom: 20px;
-            transition: all 0.2s ease;
-            box-shadow: 4px 4px 0px rgba(139, 102, 66, 0.2);
-          `;
-          
-          card.innerHTML = `
-            <div style="margin-bottom: 15px;">
-              <h3 style="
-                font-family: 'Libre Baskerville', serif;
-                color: #5a4a3a;
-                margin-bottom: 5px;
-                font-size: 1.3em;
-              ">${keepsake.song}</h3>
-              <p style="
-                color: #8b7355; 
-                font-style: italic; 
-                font-size: 0.95em;
-                font-family: 'Courier Prime', monospace;
-              ">
-                ${keepsake.artist}
-              </p>
+        showEmptyState();
+        return;
+      }
+
+      keepsakeCount.textContent = `${gallery.length} keepsake${gallery.length === 1 ? '' : 's'}`;
+      renderCards();
+      renderDots();
+      updateCarousel();
+    }
+
+    function showEmptyState() {
+      carouselTrack.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">♪</div>
+          <h3>your anthology is empty</h3>
+          <p>search for songs and save your favorite lines</p>
+        </div>
+      `;
+      keepsakeCount.textContent = '0 keepsakes';
+      dotsContainer.innerHTML = '';
+      document.querySelector('.card-actions').style.display = 'none';
+    }
+
+    function renderCards() {
+      carouselTrack.innerHTML = gallery.map((keepsake, index) => `
+        <div class="keepsake-card" data-index="${index}">
+          <div class="card-inner">
+            <div class="card-header">
+              <div class="vinyl-icon">♫</div>
+              <div class="song-info">
+                <h2 class="song-title">${keepsake.song}</h2>
+                <p class="artist-name">${keepsake.artist}</p>
+              </div>
             </div>
             
-            <div style="
-              background: #f4ebe0;
-              padding: 20px;
-              border-left: 4px solid #cd997c;
-            ">
+            <div class="lyrics-container">
               ${keepsake.lines.map(line => `
-                <p style="
-                  color: #5a4a3a;
-                  line-height: 1.8;
-                  margin: 8px 0;
-                  font-size: 1.05em;
-                  font-family: 'Courier Prime', monospace;
-                ">${line.text}</p>
+                <p class="lyric-line">${line.text}</p>
               `).join('')}
             </div>
             
-            <div style="
-              margin-top: 15px;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            ">
-              <span style="
-                font-size: 0.8em;
-                color: #b5a08f;
-                font-style: italic;
-                font-family: 'Space Mono', monospace;
-                letter-spacing: 1px;
-              ">
-                ${keepsake.hasTiming ? 'animated' : 'static'}
-              </span>
-              <button class="deleteButton" data-index="${index}" style="
-                padding: 8px 16px;
-                border: 2px solid #8b4a42;
-                background: #fffef9;
-                color: #8b4a42;
-                font-family: 'Space Mono', monospace;
-                font-weight: 700;
-                cursor: pointer;
-                font-size: 0.8em;
-                transition: all 0.2s ease;
-                box-shadow: 2px 2px 0px rgba(139, 74, 66, 0.2);
-                letter-spacing: 1px;
-              ">delete</button>
+            <div class="card-footer">
+              <div class="badge ${keepsake.hasTiming ? 'animated-badge' : 'static-badge'}">
+                ${keepsake.hasTiming ? '✦ animated' : '✧ static'}
+              </div>
             </div>
-          `;
-          
-          galleryGrid.appendChild(card);
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDots() {
+      dotsContainer.innerHTML = gallery.map((_, index) => `
+        <button class="dot ${index === 0 ? 'active' : ''}" data-index="${index}"></button>
+      `).join('');
+
+      document.querySelectorAll('.dot').forEach(dot => {
+        dot.addEventListener('click', (e) => {
+          currentIndex = parseInt(e.target.dataset.index);
+          updateCarousel();
         });
-        
-        document.querySelectorAll('.deleteButton').forEach(button => {
-          button.addEventListener('click', (e) => {
-            const index = parseInt(e.target.dataset.index);
-            handleDelete(index);
-          });
+      });
+    }
+
+    function updateCarousel() {
+      const cards = document.querySelectorAll('.keepsake-card');
+      const dots = document.querySelectorAll('.dot');
+      
+      cards.forEach((card, index) => {
+        card.classList.remove('active', 'prev', 'next');
+        if (index === currentIndex) {
+          card.classList.add('active');
+        } else if (index === currentIndex - 1) {
+          card.classList.add('prev');
+        } else if (index === currentIndex + 1) {
+          card.classList.add('next');
+        }
+      });
+
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentIndex);
+      });
+
+      // Update button states
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex === gallery.length - 1;
+
+      // Scroll to active card
+      if (cards[currentIndex]) {
+        cards[currentIndex].scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest',
+          inline: 'center'
         });
       }
     }
 
-    function handleDelete(index) {
-      if (confirm('are you sure you want to delete this keepsake?')) {
-        deleteFromGallery(index);
+    prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateCarousel();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentIndex < gallery.length - 1) {
+        currentIndex++;
+        updateCarousel();
+      }
+    });
+
+    shareBtn.addEventListener('click', async () => {
+      const currentCard = document.querySelector('.keepsake-card.active');
+      if (!currentCard) return;
+
+      // Create a shareable image/screenshot
+      try {
+        // If Web Share API is available
+        if (navigator.share) {
+          await navigator.share({
+            title: gallery[currentIndex].song,
+            text: `${gallery[currentIndex].lines.map(l => l.text).join('\n')}\n\n— ${gallery[currentIndex].song} by ${gallery[currentIndex].artist}`,
+          });
+        } else {
+          // Fallback: copy to clipboard
+          const text = `${gallery[currentIndex].lines.map(l => l.text).join('\n')}\n\n— ${gallery[currentIndex].song} by ${gallery[currentIndex].artist}`;
+          await navigator.clipboard.writeText(text);
+          showToast('Copied to clipboard!');
+        }
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      if (confirm('delete this keepsake?')) {
+        deleteFromGallery(currentIndex);
+        
+        // Adjust current index if needed
+        if (currentIndex >= gallery.length - 1 && currentIndex > 0) {
+          currentIndex--;
+        }
+        
         loadGallery();
+      }
+    });
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 2000);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        currentIndex--;
+        updateCarousel();
+      } else if (e.key === 'ArrowRight' && currentIndex < gallery.length - 1) {
+        currentIndex++;
+        updateCarousel();
+      }
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    carouselTrack.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    carouselTrack.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      if (touchEndX < touchStartX - 50 && currentIndex < gallery.length - 1) {
+        currentIndex++;
+        updateCarousel();
+      }
+      if (touchEndX > touchStartX + 50 && currentIndex > 0) {
+        currentIndex--;
+        updateCarousel();
       }
     }
 
