@@ -17,6 +17,7 @@ This web app uses the free API called LRCLIB, which is an open-source database f
 
 This can then be "parsed" through to recieve lyrics for each song (in individual lines).
 
-This web app is written in JavaScript and is accessible through GitHub pages as well.
+This web app is written in JavaScript and is accessible through GitHub pages here:
+https://rachaelchung.github.io/API-demo/search.html
 
 *A side note: I am completely aware my code has some uneccessary features of collecting the timestamps for each lyric. While I could've just parsed through the plainLyrics, I was collecting everything because I thought I was going to use the syncedLyrics, which in the end, I did not.*
