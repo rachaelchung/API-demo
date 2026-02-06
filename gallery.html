@@ -7,8 +7,13 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+  <div class="home-button">
+    <a href="index.html" class="nav-button">menu</a>
+  </div>
+
   <div class="nav-buttons">
-    <a href="search.html" class="nav-button">home</a>
+    <a href="search.html" class="nav-button">search for more</a>
   </div>
   
   <div class="gallery-wrapper">
@@ -45,6 +50,7 @@
         delete
       </button>
     </div>
+
   </div>
 
   <script src="shared.js"></script>
@@ -142,9 +148,9 @@
         dot.classList.toggle('active', index === currentIndex);
       });
 
-      // Update button states
-      prevBtn.disabled = currentIndex === 0;
-      nextBtn.disabled = currentIndex === gallery.length - 1;
+      // no longer applicable since looping
+      //prevBtn.disabled = currentIndex === 0;
+      //nextBtn.disabled = currentIndex === gallery.length - 1;
 
       // Scroll to active card
       if (cards[currentIndex]) {
@@ -154,20 +160,28 @@
           inline: 'center'
         });
       }
+
+      setTimeout(() => {
+        isScrollingProgrammatically = false;
+      }, 500);
     }
 
     prevBtn.addEventListener('click', () => {
-      if (currentIndex >= 0) {
+      if (currentIndex > 0) {
         currentIndex--;
-        updateCarousel();
+      } else {
+        currentIndex = gallery.length - 1;
       }
+      updateCarousel();
     });
 
     nextBtn.addEventListener('click', () => {
-      if (currentIndex <= gallery.length - 1) {
+      if (currentIndex < gallery.length - 1) {
         currentIndex++;
-        updateCarousel();
+      } else {
+        currentIndex = 0;
       }
+      updateCarousel();
     });
 
     shareBtn.addEventListener('click', async () => {
@@ -213,11 +227,11 @@
 
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft' && currentIndex > 0) {
-        currentIndex--;
+      if (e.key === 'ArrowLeft') {
+        currentIndex = currentIndex > 0 ? currentIndex - 1 : gallery.length - 1;
         updateCarousel();
-      } else if (e.key === 'ArrowRight' && currentIndex < gallery.length - 1) {
-        currentIndex++;
+      } else if (e.key === 'ArrowRight') {
+        currentIndex = currentIndex < gallery.length - 1 ? currentIndex + 1 : 0;
         updateCarousel();
       }
     });
@@ -236,15 +250,65 @@
     });
 
     function handleSwipe() {
-      if (touchEndX < touchStartX - 50 && currentIndex < gallery.length - 1) {
-        currentIndex++;
+      if (touchEndX < touchStartX - 50) {
+        currentIndex = currentIndex < gallery.length - 1 ? currentIndex + 1 : 0;
         updateCarousel();
       }
-      if (touchEndX > touchStartX + 50 && currentIndex > 0) {
-        currentIndex--;
+      if (touchEndX > touchStartX + 50) {
+        currentIndex = currentIndex > 0 ? currentIndex - 1 : gallery.length - 1;
         updateCarousel();
       }
     }
+
+    // Scroll support
+    let scrollTimeout;
+    let isScrollingProgrammatically = false;
+
+    carouselTrack.addEventListener('scroll', () => {
+      // Ignore scroll events caused by our own scrollIntoView
+      if (isScrollingProgrammatically) return;
+      
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const cards = document.querySelectorAll('.keepsake-card');
+        const trackRect = carouselTrack.getBoundingClientRect();
+        const trackCenter = trackRect.left + trackRect.width / 2;
+        
+        let closestIndex = 0;
+        let closestDistance = Infinity;
+        
+        cards.forEach((card, index) => {
+          const cardRect = card.getBoundingClientRect();
+          const cardCenter = cardRect.left + cardRect.width / 2;
+          const distance = Math.abs(cardCenter - trackCenter);
+          
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+          }
+        });
+        
+        if (closestIndex !== currentIndex) {
+          currentIndex = closestIndex;
+          // Don't call updateCarousel here - just update the visual state
+          const dots = document.querySelectorAll('.dot');
+          dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentIndex);
+          });
+          
+          cards.forEach((card, index) => {
+            card.classList.remove('active', 'prev', 'next');
+            if (index === currentIndex) {
+              card.classList.add('active');
+            } else if (index === currentIndex - 1) {
+              card.classList.add('prev');
+            } else if (index === currentIndex + 1) {
+              card.classList.add('next');
+            }
+          });
+        }
+      }, 150); // Increased debounce
+    });
 
     // Load gallery on page load
     loadGallery();

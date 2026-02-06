@@ -1,0 +1,181 @@
+This code utilize Claude Sonnet 4.5, GitHub Copilot, and Google Gemini.
+I have been mostly exploring coding with AI, if I tell them what my broad goal is at the same time.
+
+I used Gemini to help me plan. I first asked it to help me explore API's, so it spit out this weather code I could explore with.
+
+ME: I have a project to implement an API in a project. But I still don't quite understand how API's work
+
+GEMINI:
+
+import requests
+
+def get_weather(city):
+    # YOUR KEY GOES HERE
+    api_key = "PASTE_YOUR_API_KEY_HERE"
+    
+    # The base URL for the 'Current Weather' service
+    base_url = "http://api.openweathermap.org/data/2.5/weather"
+
+    # We use a dictionary for the 'parameters' of the request
+    # 'units=metric' gives us Celsius instead of Kelvin
+    params = {
+        "q": city,
+        "appid": api_key,
+        "units": "metric" 
+    }
+
+    try:
+        response = requests.get(base_url, params=params)
+        
+        # This checks for 404s or 500s automatically
+        response.raise_for_status() 
+        
+        data = response.json()
+
+        # Navigating the JSON dictionary to find the data we want
+        temp = data["main"]["temp"]
+        desc = data["weather"][0]["description"]
+        city_name = data["name"]
+
+        print(f"--- Weather in {city_name} ---")
+        print(f"Temperature: {temp}°C")
+        print(f"Condition: {desc.capitalize()}")
+
+    except requests.exceptions.HTTPError:
+        print("City not found or API key is still activating.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Try it out!
+user_city = input("Enter a city name: ")
+get_weather(user_city)
+
+
+
+Once I was satisfied with my general understanding of APIs, I asked for some suggestions. 
+
+
+
+ME: I am learning how to use APIs and would like to plan a cute little app using a free music lyric API
+GEMINI: 
+
+That sounds like a fun project! Music apps are a great way to learn because the data is structured and generally "clean."
+
+However, finding a truly free lyrics API is trickier than it used to be due to licensing restrictions. Here are your best options for 2026, ranked by ease of use for a beginner:
+
+### 1. LRCLIB (The "Hidden Gem" Choice)
+
+This is currently the most developer-friendly option for a small app. It is an open-source database that provides both plain text and **time-synced lyrics** (great if you want to make a karaoke-style app).
+
+* **Pros:** Totally free, no API key required, and no rate limits for small projects.
+* **Cons:** The database is crowdsourced, so very obscure songs might be missing.
+* **Best for:** Someone who wants to start coding *immediately* without waiting for API approvals.
+
+### 2. Genius API (The "Data Rich" Choice)
+
+Genius is famous for its crowdsourced annotations. While their API is free and very powerful, it technically doesn't return the **full lyrics** in the JSON response (only a URL to the lyrics page) to protect their web traffic.
+
+* **Pros:** Huge database; gives you "behind the scenes" facts and artist info.
+* **Cons:** You’ll need to use a "scraper" library (like `lyricsgenius` for Python) to actually get the words.
+* **Best for:** Apps that want to show song meanings or trivia.
+
+### 3. Musixmatch (The "Professional" Choice)
+
+This is the industry standard (used by Spotify and Apple). They have a free "Basic" tier.
+
+* **Pros:** Incredible accuracy and coverage.
+* **Cons:** The free tier only lets you show **30% of the lyrics** per song and requires an API key.
+* **Best for:** Learning how to handle API keys and restrictive data limits.
+
+---
+
+## Simple App Architecture
+
+Since you're planning, here is a quick visual of how your "cute little app" will likely work:
+
+### Planning Your Features
+
+If you want to keep it "cute," try these small feature ideas:
+
+* **Mood Detector:** Change the background color of your app based on common words in the lyrics (e.g., "blue" for sad words, "yellow" for happy ones).
+* **Daily Lyric Card:** Generate a pretty, shareable image of a random line from a song.
+* **Lyric Translator:** Use a second API (like Google Translate) to show what a song means in another language.
+
+**Which of these APIs sounds like the best fit for your vision?** I can help you write the first bit of code to connect to it!
+
+Later,
+
+ME: OK let's use javascript then. Write me a summary of what the app is
+GEMINI:
+
+Choosing JavaScript is a smart move for this project. Because you want a "cute" UI with specific timing, JavaScript's ability to manipulate the browser’s **Document Object Model (DOM)** in real-time is exactly what you need.
+
+Here is the official summary and vision for your app:
+
+---
+
+## 🌸 Project Summary: **Lyrical Keepsakes**
+
+**Lyrical Keepsakes** is a minimalist, aesthetic digital scrapbook where users "collect" the lines of music that stay with them. Instead of a standard music player, it is a gallery of **animated poetry cards.**
+
+### Key Experience: "Ghost Karaoke"
+
+The heart of the app is the **Keepsake Card**. When you save a snippet of a song (e.g., the bridge of your favorite ballad), the card doesn't just show static text. Using synchronized timing data, the words "pulse" or "glow" in a ghostly, silent rhythm—exactly as if the song were playing, but in beautiful silence.
+
+### Core Features
+
+* **The Curator (Search):** A clean interface to find songs using the **LRCLIB API**.
+* **The Selection:** Users highlight the specific lines they want to "keep" from the full song lyrics.
+* **The Vault (Storage):** A personal library saved in the browser’s **LocalStorage**, so your collection persists without needing a complex database.
+* **The Gallery:** A grid of "Glassmorphism" cards that loop their lyric animations, creating a living wall of your favorite musical moments.
+
+---
+
+## 🛠️ The Functional Architecture
+
+To help you visualize how the code will move data, here is the flow of your app:
+
+---
+
+## 📝 Implementation Plan
+
+### Step 1: The "Search & Fetch" (API Integration)
+
+You’ll build a search bar that asks LRCLIB for a song and displays the results.
+
+* **AI Prompt:** *"Write a JavaScript script that takes a song title and artist from an HTML input, calls the LRCLIB search API, and logs the `syncedLyrics` of the first result to the console."*
+
+### Step 2: The "LRC Parser" (Data Logic)
+
+You’ll turn raw text like `[00:45.10] I love you` into a usable format like `{ time: 45.1, text: "I love you" }`.
+
+* **AI Prompt:** *"I have a string of lyrics in LRC format from LRCLIB. Write a JS function to parse this string into an array of objects with 'time' (in total seconds) and 'text' keys. Filter out any empty lines."*
+
+### Step 3: The "Ghost Loop" (Animation)
+
+You’ll create the "Virtual Playhead" that makes the text glow on time.
+
+* **AI Prompt:** *"Create a JavaScript loop using `requestAnimationFrame` that tracks a timer for a 10-second lyric snippet. When the timer matches a timestamp in a 'lyrics' array, add a CSS class 'active-lyric' to the corresponding HTML element to make it glow."*
+
+### Step 4: The "Keepsake Vault" (Persistence)
+
+You’ll save these cards so they don't disappear when you close the tab.
+
+* **AI Prompt:** *"Show me how to save an array of lyric objects to `localStorage` and how to map through that array to create a grid of 'Card' components in HTML/CSS."*
+
+---
+
+**Would you like me to generate the initial HTML and CSS for a "Keepsake Card" so you can see the aesthetic starting to take shape?**
+
+
+I then switched to Claude.
+
+ME: Hi there! I'm doing a short project to learn about APIs. I would like to create a cute way to store song lyrics for yourself. Ready to work on this with me?
+
+I gave Claude the entire "Implementation Plan" from Gemini and worked with Claude from there.
+
+
+I only used GitHub CoPilot to split up my files when it was getting too big.
+
+ME: are you able to create new files? I'm looking to split the "gallery" and "search" feature into two separate pages
+ME: Start implementation
