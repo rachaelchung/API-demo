@@ -51,13 +51,16 @@
 
       try {
         const response = await fetch(
-          `https://lrclib.net/api/search?q=${encodeURIComponent(search)}`
+          `https://lrclib.net/api/search?q=${encodeURIComponent(search)}`,
           {
             headers: {
               'User-Agent': 'cadenzas: a short project for a coding class. https://github.com/rachaelchung/API-demo'
             }
           }
         );
+
+        console.log('Response status:', response.status); // ADD THIS
+        console.log('Response ok?:', response.ok);
 
         if (!response.ok) {
           throw new Error('Failed to fetch lyrics');
