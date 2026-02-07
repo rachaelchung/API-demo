@@ -20,4 +20,6 @@ This can then be "parsed" through to recieve lyrics for each song (in individual
 This web app is written in JavaScript and is accessible through GitHub pages here:
 https://rachaelchung.github.io/API-demo/index.html
 
+Learn about LRCLIB here: https://lrclib.net/
+
 *A side note: I am completely aware my code has some uneccessary features of collecting the timestamps for each lyric. While I could've just parsed through the plainLyrics, I was collecting everything because I thought I was going to use the syncedLyrics, which in the end, I did not.*
